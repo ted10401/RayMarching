@@ -36,6 +36,8 @@ public class RayMarchingCamera : MonoBehaviour
     private Camera m_camera;
 
     [SerializeField] private Color m_mainColor;
+    [SerializeField, Range(1, 300)] private int m_maxIterations = 164;
+    [SerializeField, Range(0.001f, 0.1f)] private float m_accuracy = 0.01f;
     [SerializeField] private float m_maxDistance = 10;
 
     [Header("Light")]
@@ -47,6 +49,11 @@ public class RayMarchingCamera : MonoBehaviour
     [SerializeField] private Vector2 m_shadowDistance;
     [SerializeField] private float m_shadowIntensity;
     [SerializeField] private float _shadowPenumbra;
+
+    [Header("Ambient Occlusion")]
+    [SerializeField, Range(0.01f, 10.0f)] private float m_ambientOcclusionStepSize;
+    [SerializeField, Range(1, 5)] private int m_ambientOcclusionIterations;
+    [SerializeField, Range(0f, 1f)] private float m_ambientOcclusionIntensity;
 
     [Header("Signed Distance Field")]
     [SerializeField] private float m_smooth;
@@ -74,12 +81,17 @@ public class RayMarchingCamera : MonoBehaviour
         }
         
         material.SetColor("_MainColor", m_mainColor);
+        material.SetInt("_MaxInterations", m_maxIterations);
+        material.SetFloat("_Accuracy", m_accuracy);
         material.SetVector("_LightDir", m_lightTransform.forward);
         material.SetColor("_LightCol", m_lightColor);
         material.SetFloat("_LightIntensity", m_lightIntensity);
         material.SetVector("_ShadowDistance", m_shadowDistance);
         material.SetFloat("_ShadowIntensity", m_shadowIntensity);
         material.SetFloat("_ShadowPenumbra", _shadowPenumbra);
+        material.SetFloat("_AOStepSize", m_ambientOcclusionStepSize);
+        material.SetInt("_AOIterations", m_ambientOcclusionIterations);
+        material.SetFloat("_AOIntensity", m_ambientOcclusionIntensity);
         material.SetMatrix("_CameraFrustumPlanes", GetCameraFrustumPlanes());
         material.SetMatrix("_CameraToWorldMatrix", myCamera.cameraToWorldMatrix);
         material.SetFloat("_MaxDistance", m_maxDistance);

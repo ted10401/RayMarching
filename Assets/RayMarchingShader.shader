@@ -23,6 +23,8 @@ Shader "Unlit/RayMarchingShader"
 			sampler2D _MainTex;
 			float4 _MainTex_ST;
 			uniform sampler2D _CameraDepthTexture;
+			uniform int _MaxIterations;
+			uniform float _Accuracy;
 			uniform float4 _MainColor;
 			uniform float3 _LightDir;
 			uniform float3 _LightCol;
@@ -191,22 +193,50 @@ Shader "Unlit/RayMarchingShader"
 				return result;
 			}
 
+			uniform float _AOStepSize;
+			uniform int _AOIterations;
+			uniform float _AOIntensity;
+
+			float getAmbientOcclusion(float3 p, float3 n)
+			{
+				float step = _AOStepSize;
+				float ao = 0.0;
+				float dist;
+				for (int i = 1; i <= _AOIterations; i++)
+				{
+					dist = step * i;
+					ao += max(0.0, (dist - distanceField(p + n * dist)) / dist);
+				}
+
+				return 1.0 - ao * _AOIntensity;
+			}
+
 			float3 getShading(float3 p, float3 n)
 			{
+				float3 result;
+
+				//Diffuse Color
+				float3 color = _MainColor;
+
 				//Directional Light
-				float result = (_LightCol * dot(-_LightDir, n) * 0.5 + 0.5) * _LightIntensity;
+				float light = (_LightCol * dot(-_LightDir, n) * 0.5 + 0.5) * _LightIntensity;
 
 				//Shadows
 				float shadow = solfShadow(p, -_LightDir, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
 				shadow = max(0.0, pow(shadow, _ShadowIntensity));
 
-				return result * shadow;
+				//Ambient Occlusion
+				float ao = getAmbientOcclusion(p, n);
+
+				result = color * light * shadow * ao;
+
+				return result;
 			}
 
 			float4 raymarching(float3 rayOrigin, float3 rayDirection, float depth)
 			{
 				float4 result = float4(1, 1, 1, 1);
-				const int max_iteration = 164;
+				const int max_iteration = _MaxDistance;
 				float t = 0; //distance travelled along the ray direction
 
 				for (int i = 0; i < max_iteration; i++)
@@ -220,12 +250,12 @@ Shader "Unlit/RayMarchingShader"
 
 					float3 p = rayOrigin + rayDirection * t;
 					float d = distanceField(p);
-					if (d < 0.01) //hit something
+					if (d < _Accuracy) //hit something
 					{
 						//shading
 						float3 normal = getNormal(p);
 						float3 shading = getShading(p, normal);
-						result = float4(_MainColor.rgb * shading, 1);
+						result = float4(shading, 1);
 
 						break;
 					}

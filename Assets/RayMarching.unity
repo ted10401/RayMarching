@@ -145,6 +145,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_shader: {fileID: 4800000, guid: e7a69bb6ff4d4b54aabc29c8d694da0b, type: 3}
   m_mainColor: {r: 1, g: 1, b: 1, a: 0}
+  m_maxIterations: 300
+  m_accuracy: 0.001
   m_maxDistance: 1000
   m_lightTransform: {fileID: 1909426291}
   m_lightColor: {r: 1, g: 1, b: 1, a: 0}
@@ -152,6 +154,9 @@ MonoBehaviour:
   m_shadowDistance: {x: 0.01, y: 10}
   m_shadowIntensity: 1
   _shadowPenumbra: 75.87
+  m_ambientOcclusionStepSize: 0.1
+  m_ambientOcclusionIterations: 3
+  m_ambientOcclusionIntensity: 0.229
   m_smooth: 0.15
   m_spherePosition: {x: 0, y: 1, z: 0}
   m_sphereRadius: 1.5
