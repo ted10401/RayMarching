@@ -35,8 +35,20 @@ public class RayMarchingCamera : MonoBehaviour
     }
     private Camera m_camera;
 
-    [SerializeField] private Transform m_lightTransform;
+    [SerializeField] private Color m_mainColor;
     [SerializeField] private float m_maxDistance = 10;
+
+    [Header("Light")]
+    [SerializeField] private Transform m_lightTransform;
+    [SerializeField] private Color m_lightColor;
+    [SerializeField] private float m_lightIntensity;
+
+    [Header("Shadow")]
+    [SerializeField] private Vector2 m_shadowDistance;
+    [SerializeField] private float m_shadowIntensity;
+    [SerializeField] private float _shadowPenumbra;
+
+    [Header("Signed Distance Field")]
     [SerializeField] private float m_smooth;
     [SerializeField] private Vector3 m_spherePosition;
     [SerializeField] private float m_sphereRadius;
@@ -48,6 +60,11 @@ public class RayMarchingCamera : MonoBehaviour
     [SerializeField] private Vector3 m_torusPosition;
     [SerializeField] private Vector2 m_torusRadius;
 
+    private void OnEnable()
+    {
+        myCamera.depthTextureMode = DepthTextureMode.Depth;
+    }
+
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         if(material == null)
@@ -55,9 +72,14 @@ public class RayMarchingCamera : MonoBehaviour
             Graphics.Blit(source, destination);
             return;
         }
-
-        material.SetTexture("_MainTex", source);
+        
+        material.SetColor("_MainColor", m_mainColor);
         material.SetVector("_LightDir", m_lightTransform.forward);
+        material.SetColor("_LightCol", m_lightColor);
+        material.SetFloat("_LightIntensity", m_lightIntensity);
+        material.SetVector("_ShadowDistance", m_shadowDistance);
+        material.SetFloat("_ShadowIntensity", m_shadowIntensity);
+        material.SetFloat("_ShadowPenumbra", _shadowPenumbra);
         material.SetMatrix("_CameraFrustumPlanes", GetCameraFrustumPlanes());
         material.SetMatrix("_CameraToWorldMatrix", myCamera.cameraToWorldMatrix);
         material.SetFloat("_MaxDistance", m_maxDistance);
@@ -73,6 +95,7 @@ public class RayMarchingCamera : MonoBehaviour
         material.SetVector("_TorusRadius", m_torusRadius);
 
         RenderTexture.active = destination;
+        material.SetTexture("_MainTex", source);
         GL.PushMatrix();
         GL.LoadOrtho();
         material.SetPass(0);

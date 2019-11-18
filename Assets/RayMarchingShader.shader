@@ -1,5 +1,4 @@
-﻿// Upgrade NOTE: commented out 'float4x4 _CameraToWorld', a built-in variable
-
+﻿
 Shader "Unlit/RayMarchingShader"
 {
     Properties
@@ -23,7 +22,14 @@ Shader "Unlit/RayMarchingShader"
 
 			sampler2D _MainTex;
 			float4 _MainTex_ST;
+			uniform sampler2D _CameraDepthTexture;
+			uniform float4 _MainColor;
 			uniform float3 _LightDir;
+			uniform float3 _LightCol;
+			uniform float _LightIntensity;
+			uniform float2 _ShadowDistance;
+			uniform float _ShadowIntensity;
+			uniform float _ShadowPenumbra;
 			uniform float4x4 _CameraFrustumPlanes;
 			uniform float4x4 _CameraToWorldMatrix;
 			uniform float _MaxDistance;
@@ -67,10 +73,10 @@ Shader "Unlit/RayMarchingShader"
                 return o;
             }
 
-			float sdPlane(float3 position, float3 center)
+			float sdPlane(float3 position, float3 center, float4 normal)
 			{
 				float3 p = position - center;
-				return p.y;
+				return dot(p, normal.xyz) + normal.w;
 			}
 
 			float sdSphere(float3 position, float3 center, float radius)
@@ -122,17 +128,20 @@ Shader "Unlit/RayMarchingShader"
 
 			float distanceField(float3 p)
 			{
-				float plane = sdPlane(p, float3(0, 0, 0));
+				float plane = sdPlane(p, float3(0, 0, 0), float4(0, 1, 0, 0));
 				float sphere = sdSphere(p, _SpherePosition, _SphereRadius);
 				float box = sdBox(p, _BoxPosition, _BoxScale);
 				float roundBox = sdRoundBox(p, _RoundBoxPosition, _RoundBoxScale, _RoundBoxRadius);
 				float torus = sdTorus(p, _TorusPosition, _TorusRadius);
 
-				float sd = sphere;
+				/*float sd = sphere;
 				sd = opSmoothUnion(sd, box, _Smooth);
 				sd = opSmoothUnion(sd, roundBox, _Smooth);
-				sd = opSmoothUnion(sd, torus, _Smooth);
-				return sd;
+				sd = opSmoothUnion(sd, torus, _Smooth);*/
+
+				float sd = opSmoothSubtraction(sphere, roundBox, _Smooth);
+
+				return opUnion(plane, sd);
 			}
 
 			float3 getNormal(float3 p)
@@ -147,18 +156,65 @@ Shader "Unlit/RayMarchingShader"
 				return normalize(normal);
 			}
 
-			fixed4 raymarching(float3 rayOrigin, float3 rayDirection)
+			float hardShadow(float3 ro, float3 rd, float mint, float maxt)
 			{
-				fixed4 result = fixed4(1, 1, 1, 1);
-				const int max_iteration = 64;
+				for (float t = mint; t < maxt;)
+				{
+					float h = distanceField(ro + rd * t);
+					if (h < 0.001)
+					{
+						return 0.0;
+					}
+					
+					t += h;
+				}
+
+				return 1.0;
+			}
+
+			float solfShadow(float3 ro, float3 rd, float mint, float maxt, float k)
+			{
+				float result = 1.0;
+
+				for (float t = mint; t < maxt;)
+				{
+					float h = distanceField(ro + rd * t);
+					if (h < 0.001)
+					{
+						return 0.0;
+					}
+
+					result = min(result, k * h / t);
+					t += h;
+				}
+
+				return result;
+			}
+
+			float3 getShading(float3 p, float3 n)
+			{
+				//Directional Light
+				float result = (_LightCol * dot(-_LightDir, n) * 0.5 + 0.5) * _LightIntensity;
+
+				//Shadows
+				float shadow = solfShadow(p, -_LightDir, _ShadowDistance.x, _ShadowDistance.y, _ShadowPenumbra) * 0.5 + 0.5;
+				shadow = max(0.0, pow(shadow, _ShadowIntensity));
+
+				return result * shadow;
+			}
+
+			float4 raymarching(float3 rayOrigin, float3 rayDirection, float depth)
+			{
+				float4 result = float4(1, 1, 1, 1);
+				const int max_iteration = 164;
 				float t = 0; //distance travelled along the ray direction
 
 				for (int i = 0; i < max_iteration; i++)
 				{
-					if (t > _MaxDistance)
+					if (t > _MaxDistance || t >= depth)
 					{
 						//Environment
-						result = fixed4(rayDirection, 0);
+						result = float4(rayDirection, 0);
 						break;
 					}
 
@@ -168,9 +224,8 @@ Shader "Unlit/RayMarchingShader"
 					{
 						//shading
 						float3 normal = getNormal(p);
-						float light = dot(-_LightDir, normal);
-						result = fixed4(1, 1, 1, 1);
-						result.rgb *= light;
+						float3 shading = getShading(p, normal);
+						result = float4(_MainColor.rgb * shading, 1);
 
 						break;
 					}
@@ -181,15 +236,17 @@ Shader "Unlit/RayMarchingShader"
 				return result;
 			}
 
-            fixed4 frag (v2f i) : SV_Target
+            float4 frag (v2f i) : SV_Target
             {
-				fixed3 col = tex2D(_MainTex, i.uv);
+				float depth = LinearEyeDepth(tex2D(_CameraDepthTexture, i.uv).r);
+				depth *= length(i.ray);
+				float3 col = tex2D(_MainTex, i.uv);
 				float3 rayDirection = normalize(i.ray);
 				float3 rayOrigin = _WorldSpaceCameraPos;
-				fixed4 result = raymarching(rayOrigin, rayDirection);
+				float4 result = raymarching(rayOrigin, rayDirection, depth);
 
 				col = col * (1 - result.w) + result.xyz * result.w;
-				return fixed4(col, 1);
+				return float4(col, 1);
             }
             ENDCG
         }
