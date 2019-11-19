@@ -35,10 +35,13 @@ public class RayMarchingCamera : MonoBehaviour
     }
     private Camera m_camera;
 
-    [SerializeField] private Color m_mainColor;
+    [Header("Setup")]
+    [SerializeField] private float m_maxDistance = 10;
     [SerializeField, Range(1, 300)] private int m_maxIterations = 164;
     [SerializeField, Range(0.001f, 0.1f)] private float m_accuracy = 0.01f;
-    [SerializeField] private float m_maxDistance = 10;
+
+    [Header("Color")]
+    [SerializeField] private Color m_mainColor;
 
     [Header("Light")]
     [SerializeField] private Transform m_lightTransform;
@@ -54,6 +57,12 @@ public class RayMarchingCamera : MonoBehaviour
     [SerializeField, Range(0.01f, 10.0f)] private float m_ambientOcclusionStepSize;
     [SerializeField, Range(1, 5)] private int m_ambientOcclusionIterations;
     [SerializeField, Range(0f, 1f)] private float m_ambientOcclusionIntensity;
+
+    [Header("Reflection")]
+    [SerializeField, Range(0, 2)] private int m_reflectionCount;
+    [SerializeField, Range(0f, 1f)] private float m_reflectionIntensity;
+    [SerializeField, Range(0f, 1f)] private float m_environmentReflectionIntensity;
+    [SerializeField] private Cubemap m_reflectionCube;
 
     [Header("Signed Distance Field")]
     [SerializeField] private float m_smooth;
@@ -79,22 +88,39 @@ public class RayMarchingCamera : MonoBehaviour
             Graphics.Blit(source, destination);
             return;
         }
-        
-        material.SetColor("_MainColor", m_mainColor);
-        material.SetInt("_MaxInterations", m_maxIterations);
-        material.SetFloat("_Accuracy", m_accuracy);
-        material.SetVector("_LightDir", m_lightTransform.forward);
-        material.SetColor("_LightCol", m_lightColor);
-        material.SetFloat("_LightIntensity", m_lightIntensity);
-        material.SetVector("_ShadowDistance", m_shadowDistance);
-        material.SetFloat("_ShadowIntensity", m_shadowIntensity);
-        material.SetFloat("_ShadowPenumbra", _shadowPenumbra);
-        material.SetFloat("_AOStepSize", m_ambientOcclusionStepSize);
-        material.SetInt("_AOIterations", m_ambientOcclusionIterations);
-        material.SetFloat("_AOIntensity", m_ambientOcclusionIntensity);
+
+        //Setup
         material.SetMatrix("_CameraFrustumPlanes", GetCameraFrustumPlanes());
         material.SetMatrix("_CameraToWorldMatrix", myCamera.cameraToWorldMatrix);
         material.SetFloat("_MaxDistance", m_maxDistance);
+        material.SetInt("_MaxInterations", m_maxIterations);
+        material.SetFloat("_Accuracy", m_accuracy);
+
+        //Color
+        material.SetColor("_MainColor", m_mainColor);
+
+        //Light
+        material.SetVector("_LightDir", m_lightTransform.forward);
+        material.SetColor("_LightCol", m_lightColor);
+        material.SetFloat("_LightIntensity", m_lightIntensity);
+
+        //Shadow
+        material.SetVector("_ShadowDistance", m_shadowDistance);
+        material.SetFloat("_ShadowIntensity", m_shadowIntensity);
+        material.SetFloat("_ShadowPenumbra", _shadowPenumbra);
+
+        //Ambient Occlusion
+        material.SetFloat("_AOStepSize", m_ambientOcclusionStepSize);
+        material.SetInt("_AOIterations", m_ambientOcclusionIterations);
+        material.SetFloat("_AOIntensity", m_ambientOcclusionIntensity);
+
+        //Reflection
+        material.SetInt("_ReflectionCount", m_reflectionCount);
+        material.SetFloat("_ReflectionIntensity", m_reflectionIntensity);
+        material.SetFloat("_EnvironmentReflectionIntensity", m_environmentReflectionIntensity);
+        material.SetTexture("_ReflectionCube", m_reflectionCube);
+
+        //SDF
         material.SetFloat("_Smooth", m_smooth);
         material.SetVector("_SpherePosition", m_spherePosition);
         material.SetFloat("_SphereRadius", m_sphereRadius);

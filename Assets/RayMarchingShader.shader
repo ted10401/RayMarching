@@ -22,19 +22,40 @@ Shader "Unlit/RayMarchingShader"
 
 			sampler2D _MainTex;
 			float4 _MainTex_ST;
+
+			//Setup
 			uniform sampler2D _CameraDepthTexture;
-			uniform int _MaxIterations;
-			uniform float _Accuracy;
-			uniform float4 _MainColor;
-			uniform float3 _LightDir;
-			uniform float3 _LightCol;
-			uniform float _LightIntensity;
-			uniform float2 _ShadowDistance;
-			uniform float _ShadowIntensity;
-			uniform float _ShadowPenumbra;
 			uniform float4x4 _CameraFrustumPlanes;
 			uniform float4x4 _CameraToWorldMatrix;
 			uniform float _MaxDistance;
+			uniform int _MaxIterations;
+			uniform float _Accuracy;
+
+			//Color
+			uniform float4 _MainColor;
+
+			//Light
+			uniform float3 _LightDir;
+			uniform float3 _LightCol;
+			uniform float _LightIntensity;
+
+			//Shadow
+			uniform float2 _ShadowDistance;
+			uniform float _ShadowIntensity;
+			uniform float _ShadowPenumbra;
+
+			//Ambient Occlusion
+			uniform float _AOStepSize;
+			uniform int _AOIterations;
+			uniform float _AOIntensity;
+
+			//Reflection
+			uniform int _ReflectionCount;
+			uniform float _ReflectionIntensity;
+			uniform float _EnvironmentReflectionIntensity;
+			uniform samplerCUBE _ReflectionCube;
+
+			//SDF
 			uniform float _Smooth;
 			uniform float3 _SpherePosition;
 			uniform float _SphereRadius;
@@ -192,10 +213,6 @@ Shader "Unlit/RayMarchingShader"
 
 				return result;
 			}
-
-			uniform float _AOStepSize;
-			uniform int _AOIterations;
-			uniform float _AOIntensity;
 
 			float getAmbientOcclusion(float3 p, float3 n)
 			{
