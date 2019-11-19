@@ -4,7 +4,7 @@
 [ExecuteInEditMode, ImageEffectAllowedInSceneView]
 public class RayMarchingCamera : MonoBehaviour
 {
-    [SerializeField] private Shader m_shader;
+    [SerializeField] private Shader m_shader = null;
 
     public Material material
     {
@@ -41,40 +41,41 @@ public class RayMarchingCamera : MonoBehaviour
     [SerializeField, Range(0.001f, 0.1f)] private float m_accuracy = 0.01f;
 
     [Header("Color")]
-    [SerializeField] private Color m_mainColor;
+    [SerializeField] private Color m_mainColor = Color.white;
 
     [Header("Light")]
-    [SerializeField] private Transform m_lightTransform;
-    [SerializeField] private Color m_lightColor;
-    [SerializeField] private float m_lightIntensity;
+    [SerializeField] private Transform m_lightTransform = null;
+    [SerializeField] private Color m_lightColor = Color.white;
+    [SerializeField] private float m_lightIntensity = 1f;
 
     [Header("Shadow")]
-    [SerializeField] private Vector2 m_shadowDistance;
-    [SerializeField] private float m_shadowIntensity;
-    [SerializeField] private float _shadowPenumbra;
+    [SerializeField] private Vector2 m_shadowDistance = new Vector2(0.01f, 10f);
+    [SerializeField] private float m_shadowIntensity = 1f;
+    [SerializeField] private float _shadowPenumbra = 75f;
 
     [Header("Ambient Occlusion")]
-    [SerializeField, Range(0.01f, 10.0f)] private float m_ambientOcclusionStepSize;
-    [SerializeField, Range(1, 5)] private int m_ambientOcclusionIterations;
-    [SerializeField, Range(0f, 1f)] private float m_ambientOcclusionIntensity;
+    [SerializeField, Range(0.01f, 10.0f)] private float m_ambientOcclusionStepSize = 0.1f;
+    [SerializeField, Range(1, 5)] private int m_ambientOcclusionIterations = 3;
+    [SerializeField, Range(0f, 1f)] private float m_ambientOcclusionIntensity = 0.25f;
 
     [Header("Reflection")]
-    [SerializeField, Range(0, 2)] private int m_reflectionCount;
-    [SerializeField, Range(0f, 1f)] private float m_reflectionIntensity;
-    [SerializeField, Range(0f, 1f)] private float m_environmentReflectionIntensity;
-    [SerializeField] private Cubemap m_reflectionCube;
+    [SerializeField, Range(0, 2)] private int m_reflectionCount = 0;
+    [SerializeField, Range(0f, 1f)] private float m_reflectionIntensity = 0;
+    [SerializeField, Range(0f, 1f)] private float m_environmentReflectionIntensity = 0;
+    [SerializeField] private Cubemap m_reflectionCube = null;
 
     [Header("Signed Distance Field")]
-    [SerializeField] private float m_smooth;
-    [SerializeField] private Vector3 m_spherePosition;
-    [SerializeField] private float m_sphereRadius;
-    [SerializeField] private Vector3 m_boxPosition;
-    [SerializeField] private Vector3 m_boxScale;
-    [SerializeField] private Vector3 m_roundBoxPosition;
-    [SerializeField] private Vector3 m_roundBoxScale;
-    [SerializeField] private float m_roundBoxRadius;
-    [SerializeField] private Vector3 m_torusPosition;
-    [SerializeField] private Vector2 m_torusRadius;
+    [SerializeField] private float m_smooth = 0f;
+    [SerializeField] private Vector3 m_planePosition = new Vector3(0, 0, 0);
+    [SerializeField] private Vector3 m_spherePosition = new Vector3(0, 1, 0);
+    [SerializeField] private float m_sphereRadius = 1.5f;
+    [SerializeField] private Vector3 m_boxPosition = new Vector3(0, 1, 0);
+    [SerializeField] private Vector3 m_boxScale = Vector3.one;
+    [SerializeField] private Vector3 m_roundBoxPosition = Vector3.zero;
+    [SerializeField] private Vector3 m_roundBoxScale = Vector3.zero;
+    [SerializeField] private float m_roundBoxRadius = 0.25f;
+    [SerializeField] private Vector3 m_torusPosition = Vector3.zero;
+    [SerializeField] private Vector2 m_torusRadius = Vector3.zero;
 
     private void OnEnable()
     {
@@ -122,6 +123,7 @@ public class RayMarchingCamera : MonoBehaviour
 
         //SDF
         material.SetFloat("_Smooth", m_smooth);
+        material.SetVector("_PlanePosition", m_planePosition);
         material.SetVector("_SpherePosition", m_spherePosition);
         material.SetFloat("_SphereRadius", m_sphereRadius);
         material.SetVector("_BoxPosition", m_boxPosition);

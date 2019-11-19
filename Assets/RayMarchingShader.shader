@@ -57,6 +57,7 @@ Shader "Unlit/RayMarchingShader"
 
 			//SDF
 			uniform float _Smooth;
+			uniform float3 _PlanePosition;
 			uniform float3 _SpherePosition;
 			uniform float _SphereRadius;
 			uniform float3 _BoxPosition;
@@ -96,34 +97,30 @@ Shader "Unlit/RayMarchingShader"
                 return o;
             }
 
-			float sdPlane(float3 position, float3 center, float4 normal)
+			float sdPlane(float3 p, float4 normal)
 			{
-				float3 p = position - center;
 				return dot(p, normal.xyz) + normal.w;
 			}
 
-			float sdSphere(float3 position, float3 center, float radius)
+			float sdSphere(float3 p, float radius)
 			{
-				return length(position - center) - radius;
+				return length(p) - radius;
 			}
 
-			float sdBox(float3 position, float3 center, float3 scale)
+			float sdBox(float3 p, float3 scale)
 			{
-				float3 p = position - center;
 				float3 q = abs(p) - scale;
 				return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
 			}
 
-			float sdRoundBox(float3 position, float3 center, float3 scale, float r)
+			float sdRoundBox(float3 p, float3 scale, float r)
 			{
-				float3 p = position - center;
 				float3 q = abs(p) - scale;
 				return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r;
 			}
 
-			float sdTorus(float3 position, float3 center, float2 radius)
+			float sdTorus(float3 p, float2 radius)
 			{
-				float3 p = position - center;
 				float2 q = float2(length(p.xz) - radius.x, p.y);
 				return length(q) - radius.y;
 			}
@@ -151,11 +148,11 @@ Shader "Unlit/RayMarchingShader"
 
 			float distanceField(float3 p)
 			{
-				float plane = sdPlane(p, float3(0, 0, 0), float4(0, 1, 0, 0));
-				float sphere = sdSphere(p, _SpherePosition, _SphereRadius);
-				float box = sdBox(p, _BoxPosition, _BoxScale);
-				float roundBox = sdRoundBox(p, _RoundBoxPosition, _RoundBoxScale, _RoundBoxRadius);
-				float torus = sdTorus(p, _TorusPosition, _TorusRadius);
+				float plane = sdPlane(p - _PlanePosition, float4(0, 1, 0, 0));
+				float sphere = sdSphere(p - _SpherePosition, _SphereRadius);
+				float box = sdBox(p - _BoxPosition, _BoxScale);
+				float roundBox = sdRoundBox(p - _RoundBoxPosition, _RoundBoxScale, _RoundBoxRadius);
+				float torus = sdTorus(p - _TorusPosition, _TorusRadius);
 
 				/*float sd = sphere;
 				sd = opSmoothUnion(sd, box, _Smooth);

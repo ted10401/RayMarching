@@ -144,29 +144,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_shader: {fileID: 4800000, guid: e7a69bb6ff4d4b54aabc29c8d694da0b, type: 3}
-  m_mainColor: {r: 1, g: 1, b: 1, a: 0}
+  m_maxDistance: 1000
   m_maxIterations: 300
   m_accuracy: 0.001
-  m_maxDistance: 1000
+  m_mainColor: {r: 1, g: 1, b: 1, a: 1}
   m_lightTransform: {fileID: 1909426291}
-  m_lightColor: {r: 1, g: 1, b: 1, a: 0}
+  m_lightColor: {r: 1, g: 1, b: 1, a: 1}
   m_lightIntensity: 1
   m_shadowDistance: {x: 0.01, y: 10}
   m_shadowIntensity: 1
-  _shadowPenumbra: 75.87
+  _shadowPenumbra: 75
   m_ambientOcclusionStepSize: 0.1
   m_ambientOcclusionIterations: 3
-  m_ambientOcclusionIntensity: 0.229
+  m_ambientOcclusionIntensity: 0.25
+  m_reflectionCount: 0
+  m_reflectionIntensity: 0
+  m_environmentReflectionIntensity: 0
+  m_reflectionCube: {fileID: 0}
   m_smooth: 0.15
+  m_planePosition: {x: 0, y: 0, z: 0}
   m_spherePosition: {x: 0, y: 1, z: 0}
   m_sphereRadius: 1.5
-  m_boxPosition: {x: 0, y: 1, z: 0}
-  m_boxScale: {x: 1, y: 1, z: 1}
   m_roundBoxPosition: {x: 0, y: 1, z: 0}
   m_roundBoxScale: {x: 1, y: 1, z: 1}
   m_roundBoxRadius: 0.25
-  m_torusPosition: {x: 0, y: 1, z: -4.5}
-  m_torusRadius: {x: 1, y: 0.25}
 --- !u!81 &1149350404
 AudioListener:
   m_ObjectHideFlags: 0
