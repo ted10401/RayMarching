@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode, ImageEffectAllowedInSceneView]
@@ -36,8 +37,8 @@ public class RayMarchingCamera : MonoBehaviour
     private Camera m_camera;
 
     [Header("Setup")]
-    [SerializeField] private float m_maxDistance = 10;
-    [SerializeField, Range(1, 300)] private int m_maxIterations = 164;
+    [SerializeField, Range(1f, 1000f)] private float m_maxDistance = 10;
+    [SerializeField, Range(1, 1000)] private int m_maxIterations = 164;
     [SerializeField, Range(0.001f, 0.1f)] private float m_accuracy = 0.01f;
 
     [Header("Color")]
@@ -59,27 +60,79 @@ public class RayMarchingCamera : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float m_ambientOcclusionIntensity = 0.25f;
 
     [Header("Reflection")]
-    [SerializeField, Range(0, 2)] private int m_reflectionCount = 0;
+    [SerializeField, Range(0, 10)] private int m_reflectionCount = 0;
     [SerializeField, Range(0f, 1f)] private float m_reflectionIntensity = 0;
     [SerializeField, Range(0f, 1f)] private float m_environmentReflectionIntensity = 0;
     [SerializeField] private Cubemap m_reflectionCube = null;
 
+    private const int SPHERE_COUNT = 16;
+
     [Header("Signed Distance Field")]
     [SerializeField] private float m_smooth = 0f;
-    [SerializeField] private Vector3 m_planePosition = new Vector3(0, 0, 0);
-    [SerializeField] private Vector3 m_spherePosition = new Vector3(0, 1, 0);
-    [SerializeField] private float m_sphereRadius = 1.5f;
-    [SerializeField] private Vector3 m_boxPosition = new Vector3(0, 1, 0);
-    [SerializeField] private Vector3 m_boxScale = Vector3.one;
-    [SerializeField] private Vector3 m_roundBoxPosition = Vector3.zero;
-    [SerializeField] private Vector3 m_roundBoxScale = Vector3.zero;
-    [SerializeField] private float m_roundBoxRadius = 0.25f;
-    [SerializeField] private Vector3 m_torusPosition = Vector3.zero;
-    [SerializeField] private Vector2 m_torusRadius = Vector3.zero;
+    [SerializeField] private Vector3 m_groundPosition = new Vector3(0, 0, 0);
+    [SerializeField] private Color m_groundColor = Color.white;
+    [SerializeField] private GameObject m_sphereReference = null;
+    [SerializeField] private Gradient m_sphereGradient = new Gradient();
+    private Vector4[] m_sphereDatas;
+    private Color[] m_sphereColors;
+    private int m_sphereIndex;
+    private Vector3 m_randomPosition;
+    private float m_randomScale;
+    private Color m_randomColor;
+    private GameObject m_instanceSphere;
+    private List<Transform> m_sphereTransforms = new List<Transform>();
 
     private void OnEnable()
     {
         myCamera.depthTextureMode = DepthTextureMode.Depth;
+    }
+
+    private void Update()
+    {
+        if(!Application.isPlaying)
+        {
+            return;
+        }
+
+        if (m_sphereDatas == null || m_sphereDatas.Length != SPHERE_COUNT)
+        {
+            m_sphereDatas = new Vector4[SPHERE_COUNT];
+            for (int i = 0; i < SPHERE_COUNT; i++)
+            {
+                m_sphereDatas[i] = new Vector4(0, 10000, 0, 0);
+            }
+        }
+
+        if (m_sphereColors == null || m_sphereColors.Length != SPHERE_COUNT)
+        {
+            m_sphereColors = new Color[SPHERE_COUNT];
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            m_sphereIndex = -1;
+            foreach(Transform trans in m_sphereTransforms)
+            {
+                GameObject.Destroy(trans.gameObject);
+            }
+
+            m_sphereTransforms.Clear();
+        }
+
+        m_sphereIndex++;
+        if (m_sphereIndex > SPHERE_COUNT)
+        {
+            return;
+        }
+        
+        m_randomPosition = new Vector3(Random.Range(-5f, 5f), Random.Range(8f, 15f), Random.Range(-5f, 5f));
+        m_randomScale = Random.Range(1f, 2f);
+        m_randomColor = m_sphereGradient.Evaluate(Random.Range(0f, 1f));
+        m_instanceSphere = Instantiate(m_sphereReference);
+        m_instanceSphere.transform.position = m_randomPosition;
+        m_instanceSphere.transform.localScale = Vector3.one * m_randomScale;
+        m_sphereColors[m_sphereIndex] = m_randomColor;
+        m_sphereTransforms.Add(m_instanceSphere.transform);
     }
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
@@ -94,7 +147,7 @@ public class RayMarchingCamera : MonoBehaviour
         material.SetMatrix("_CameraFrustumPlanes", GetCameraFrustumPlanes());
         material.SetMatrix("_CameraToWorldMatrix", myCamera.cameraToWorldMatrix);
         material.SetFloat("_MaxDistance", m_maxDistance);
-        material.SetInt("_MaxInterations", m_maxIterations);
+        material.SetInt("_MaxIterations", m_maxIterations);
         material.SetFloat("_Accuracy", m_accuracy);
 
         //Color
@@ -123,16 +176,34 @@ public class RayMarchingCamera : MonoBehaviour
 
         //SDF
         material.SetFloat("_Smooth", m_smooth);
-        material.SetVector("_PlanePosition", m_planePosition);
-        material.SetVector("_SpherePosition", m_spherePosition);
-        material.SetFloat("_SphereRadius", m_sphereRadius);
-        material.SetVector("_BoxPosition", m_boxPosition);
-        material.SetVector("_BoxScale", m_boxScale);
-        material.SetVector("_RoundBoxPosition", m_roundBoxPosition);
-        material.SetVector("_RoundBoxScale", m_roundBoxScale);
-        material.SetFloat("_RoundBoxRadius", m_roundBoxRadius);
-        material.SetVector("_TorusPosition", m_torusPosition);
-        material.SetVector("_TorusRadius", m_torusRadius);
+        material.SetVector("_GroundPosition", m_groundPosition);
+        material.SetVector("_GroundColor", m_groundColor);
+
+        if (m_sphereDatas == null || m_sphereDatas.Length != SPHERE_COUNT)
+        {
+            m_sphereDatas = new Vector4[SPHERE_COUNT];
+            for(int i = 0; i < SPHERE_COUNT; i++)
+            {
+                m_sphereDatas[i] = new Vector4(0, 10000, 0, 0);
+            }
+        }
+
+        if(m_sphereColors == null || m_sphereColors.Length != SPHERE_COUNT)
+        {
+            m_sphereColors = new Color[SPHERE_COUNT];
+        }
+
+        if(m_sphereTransforms.Count > 0)
+        {
+            for (int i = 0; i < m_sphereTransforms.Count; i++)
+            {
+                m_sphereDatas[i] = m_sphereTransforms[i].position;
+                m_sphereDatas[i].w = m_sphereTransforms[i].localScale.x;
+            }
+        }
+
+        material.SetVectorArray("_SphereDatas", m_sphereDatas);
+        material.SetColorArray("_SphereColors", m_sphereColors);
 
         RenderTexture.active = destination;
         material.SetTexture("_MainTex", source);
