@@ -19,7 +19,7 @@ Shader "Unlit/RayMarchingShader"
 			#pragma target 3.0
 
             #include "UnityCG.cginc"
-			#define SPHERE_COUNT 16
+			#define SPHERE_COUNT 25
 
 			sampler2D _MainTex;
 			float4 _MainTex_ST;
@@ -60,7 +60,6 @@ Shader "Unlit/RayMarchingShader"
 			uniform float _Smooth;
 			uniform float3 _GroundPosition;
 			uniform float3 _GroundColor;
-			uniform float4 _SphereDatas[SPHERE_COUNT];
 			uniform float3 _SphereColors[SPHERE_COUNT];
 
             struct a2v
@@ -302,81 +301,104 @@ Shader "Unlit/RayMarchingShader"
 
 			float4 distanceField(float3 pos)
 			{
-				float3 color = float3(1, 1, 1);
+				float3 color = _SphereColors[0];
 				float sd = sdSphere(pos - float3(0.0, 0.25, 0.0), 0.25);
 				float4 result = float4(color, sd);
 
+				color = _SphereColors[1];
 				sd = sdBox(pos - float3(1.0, 0.25, 0.0), float3(0.25, 0.25, 0.25));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[2];
 				sd = sdRoundBox(pos - float3(1.0, 0.25, 1.0), float3(0.15, 0.15, 0.15), 0.1);
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[3];
 				sd = sdTorus(pos - float3(0.0, 0.25, 1.0), float2(0.20, 0.05));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[4];
 				sd = sdCapsule(pos, float3(-1.3, 0.10, -0.1), float3(-0.8, 0.50, 0.2), 0.1);
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[5];
 				sd = sdTriPrism(pos - float3(-1.0, 0.25, -1.0), float2(0.25, 0.05));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[6];
 				sd = sdCylinder(pos - float3(1.0, 0.30, -1.0), float2(0.1, 0.2));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[7];
 				sd = sdCone(pos - float3(0.0, 0.50, -1.0), float3(0.8, 0.6, 0.3));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[8];
 				sd = sdTorus82(pos - float3(0.0, 0.25, 2.0), float2(0.20, 0.05));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[9];
 				sd = sdTorus88(pos - float3(-1.0, 0.25, 2.0), float2(0.20, 0.05));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[10];
 				sd = sdCylinder6(pos - float3(1.0, 0.30, 2.0), float2(0.1, 0.2));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[11];
 				sd = sdHexPrism(pos - float3(-1.0, 0.20, 1.0), float2(0.25, 0.05));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[12];
 				sd = sdPryamid4(pos - float3(-1.0, 0.15, -2.0), float3(0.8, 0.6, 0.25));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[13];
 				sd = opIntersection(sdBox(pos - float3(2.0, 0.2, 1.0), float3(0.20, 0.20, 0.20)),
 					sdSphere(pos - float3(2.0, 0.2, 1.0), 0.25));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[14];
 				sd = opSubtraction(sdSphere(pos - float3(-2.0, 0.2, 1.0), 0.25),
 					sdRoundBox(pos - float3(-2.0, 0.2, 1.0), float3(0.15, 0.15, 0.15), 0.05));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[15];
 				sd = opSubtraction(sdCylinder(opRep(float3(atan2(pos.x + 2.0, pos.z) / 6.2831, pos.y, 0.02 + 0.5 * length(pos - float3(-2.0, 0.2, 0.0))), float3(0.05, 1.0, 0.05)), float2(0.02, 0.6)),
 					sdTorus82(pos - float3(-2.0, 0.2, 0.0), float2(0.20, 0.1)));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[16];
 				sd = 0.5 * sdSphere(pos - float3(-2.0, 0.25, -1.0), 0.2)
 					+ 0.03 * sin(50.0 * pos.x) * sin(50.0 * pos.y) * sin(50.0 * pos.z);
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[17];
 				sd = 0.5 * sdTorus(opTwist(pos - float3(-2.0, 0.25, 2.0)), float2(0.20, 0.05));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[18];
 				sd = 0.3 * sdTorus(opCheapBend(pos - float3(2.0, 0.25, -1.0)), float2(0.20, 0.05));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[19];
 				sd = sdConeSection(pos - float3(0.0, 0.35, -2.0), 0.15, 0.2, 0.1);
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[20];
 				sd = sdEllipsoid(pos - float3(1.0, 0.35, -2.0), float3(0.15, 0.2, 0.05));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[21];
 				sd = sdOctahedron(pos - float3(-2.0, 0.25, -2.0), 0.2);
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[22];
 				sd = opBlend(sdBox(pos - float3(2.0, 0.25, 0.0), float3(.15, .05, .15)),
 					sdCylinder(pos - float3(2.0, 0.25, 0.0), float2(0.04, 0.2)));
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
+				color = _SphereColors[23];
 				sd = sdSphere(pos - float3(2.0, 0.25, -2.0), 0.1);
 				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0, 0.45, -2.0), 0.1), 0.05).w;
 				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0, 0.05, -2.0), 0.1), 0.05).w;
@@ -386,24 +408,20 @@ Shader "Unlit/RayMarchingShader"
 				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0, 0.25, -1.8), 0.1), 0.05).w;
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
-				sd = sdSphere(pos - float3(2.0, 0.25, 2.0), 0.1);
+				color = _SphereColors[24];
+				sd = sdSphere(pos - float3(2.0 + sin(_Time.y) * 0.25, 0.25 + sin(_Time.y) * 0.25, 2.0), 0.1);
+				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0 + sin(_Time.y) * 0.25, 0.25 - sin(_Time.y) * 0.25, 2.0), 0.1), 0.1).w;
+				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0 + sin(_Time.y) * 0.25, 0.25, 2.0 + sin(_Time.y) * 0.25), 0.1), 0.1).w;
+				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0 + sin(_Time.y) * 0.25, 0.25, 2.0 - sin(_Time.y) * 0.25), 0.1), 0.1).w;
+				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0 - sin(_Time.y) * 0.25, 0.25 + sin(_Time.y) * 0.25, 2.0), 0.1), 0.1).w;
+				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0 - sin(_Time.y) * 0.25, 0.25 - sin(_Time.y) * 0.25, 2.0), 0.1), 0.1).w;
+				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0 - sin(_Time.y) * 0.25, 0.25, 2.0 + sin(_Time.y) * 0.25), 0.1), 0.1).w;
+				sd = opSmoothUnion(sd, sdSphere(pos - float3(2.0 - sin(_Time.y) * 0.25, 0.25, 2.0 - sin(_Time.y) * 0.25), 0.1), 0.1).w;
 				result = opSmoothUnion(result, float4(color, sd), _Smooth);
 
 				sd = sdPlane(pos - _GroundPosition);
 				float4 ground = float4(_GroundColor, sd);
 				return opSmoothUnion(result, ground, _Smooth);
-
-				/*float sd = sdSphere(p - _SphereDatas[0].xyz, _SphereDatas[0].w);
-				float4 result = float4(_SphereColors[0], sd);
-				for (int i = 1; i < SPHERE_COUNT; i++)
-				{
-					sd = sdSphere(p - _SphereDatas[i].xyz, _SphereDatas[i].w);
-					result = opSmoothUnion(result, float4(_SphereColors[i], sd), _Smooth);
-				}
-
-				sd = sdPlane(p - _GroundPosition, float4(0, 1, 0, 0));
-				float4 ground = float4(_GroundColor, sd);
-				return opSmoothUnion(result, ground, _Smooth);*/
 			}
 
 			float3 getNormal(float3 p)
@@ -535,7 +553,11 @@ Shader "Unlit/RayMarchingShader"
 					float3 normal = getNormal(hitPosition);
 					float3 shading = getShading(hitPosition, normal, dCol);
 					result = float4(shading, 1);
-					result += float4(texCUBE(_ReflectionCube, normal).rgb * _EnvironmentReflectionIntensity * _ReflectionIntensity, 0);
+
+					if (_EnvironmentReflectionIntensity * _ReflectionIntensity != 0)
+					{
+						result += float4(texCUBE(_ReflectionCube, normal).rgb * _EnvironmentReflectionIntensity * _ReflectionIntensity, 0);
+					}
 
 					//Reflection
 					if (_ReflectionCount > 0)

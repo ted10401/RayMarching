@@ -71,68 +71,14 @@ public class RayMarchingCamera : MonoBehaviour
     [SerializeField] private float m_smooth = 0f;
     [SerializeField] private Vector3 m_groundPosition = new Vector3(0, 0, 0);
     [SerializeField] private Color m_groundColor = Color.white;
-    [SerializeField] private GameObject m_sphereReference = null;
     [SerializeField] private Gradient m_sphereGradient = new Gradient();
-    private Vector4[] m_sphereDatas;
-    private Color[] m_sphereColors;
-    private int m_sphereIndex;
-    private Vector3 m_randomPosition;
-    private float m_randomScale;
-    private Color m_randomColor;
-    private GameObject m_instanceSphere;
-    private List<Transform> m_sphereTransforms = new List<Transform>();
+    private Color[] m_colors = new Color[25];
 
     private void OnEnable()
     {
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = 9999;
         myCamera.depthTextureMode = DepthTextureMode.Depth;
-    }
-
-    private void Update()
-    {
-        if(!Application.isPlaying)
-        {
-            return;
-        }
-
-        if (m_sphereDatas == null || m_sphereDatas.Length != SPHERE_COUNT)
-        {
-            m_sphereDatas = new Vector4[SPHERE_COUNT];
-            for (int i = 0; i < SPHERE_COUNT; i++)
-            {
-                m_sphereDatas[i] = new Vector4(0, 10000, 0, 0);
-            }
-        }
-
-        if (m_sphereColors == null || m_sphereColors.Length != SPHERE_COUNT)
-        {
-            m_sphereColors = new Color[SPHERE_COUNT];
-        }
-
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            m_sphereIndex = -1;
-            foreach(Transform trans in m_sphereTransforms)
-            {
-                GameObject.Destroy(trans.gameObject);
-            }
-
-            m_sphereTransforms.Clear();
-        }
-
-        m_sphereIndex++;
-        if (m_sphereIndex > SPHERE_COUNT)
-        {
-            return;
-        }
-        
-        m_randomPosition = new Vector3(Random.Range(-5f, 5f), Random.Range(8f, 15f), Random.Range(-5f, 5f));
-        m_randomScale = Random.Range(1f, 2f);
-        m_randomColor = m_sphereGradient.Evaluate(Random.Range(0f, 1f));
-        m_instanceSphere = Instantiate(m_sphereReference);
-        m_instanceSphere.transform.position = m_randomPosition;
-        m_instanceSphere.transform.localScale = Vector3.one * m_randomScale;
-        m_sphereColors[m_sphereIndex] = m_randomColor;
-        m_sphereTransforms.Add(m_instanceSphere.transform);
     }
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
@@ -179,31 +125,11 @@ public class RayMarchingCamera : MonoBehaviour
         material.SetVector("_GroundPosition", m_groundPosition);
         material.SetVector("_GroundColor", m_groundColor);
 
-        if (m_sphereDatas == null || m_sphereDatas.Length != SPHERE_COUNT)
+        for(int i = 0; i < m_colors.Length; i++)
         {
-            m_sphereDatas = new Vector4[SPHERE_COUNT];
-            for(int i = 0; i < SPHERE_COUNT; i++)
-            {
-                m_sphereDatas[i] = new Vector4(0, 10000, 0, 0);
-            }
+            m_colors[i] = m_sphereGradient.Evaluate(i * 1f / (m_colors.Length - 1));
         }
-
-        if(m_sphereColors == null || m_sphereColors.Length != SPHERE_COUNT)
-        {
-            m_sphereColors = new Color[SPHERE_COUNT];
-        }
-
-        if(m_sphereTransforms.Count > 0)
-        {
-            for (int i = 0; i < m_sphereTransforms.Count; i++)
-            {
-                m_sphereDatas[i] = m_sphereTransforms[i].position;
-                m_sphereDatas[i].w = m_sphereTransforms[i].localScale.x;
-            }
-        }
-
-        material.SetVectorArray("_SphereDatas", m_sphereDatas);
-        material.SetColorArray("_SphereColors", m_sphereColors);
+        material.SetColorArray("_SphereColors", m_colors);
 
         RenderTexture.active = destination;
         material.SetTexture("_MainTex", source);
